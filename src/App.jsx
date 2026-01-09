@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  signInAnonymously, 
   signInWithPopup, 
   GoogleAuthProvider, 
   updateProfile,
@@ -29,12 +28,17 @@ import {
   Search, RefreshCw, Layers, BarChart2, RotateCcw, Sun, LogOut, 
   Calendar, Group, LayoutList, ImageIcon, Plus, HelpCircle, Users, 
   CheckCircle, Share2, Globe, Languages, Edit2, ExternalLink, Trash2,
-  Flag, FileText, AlertCircle, Loader2, Lightbulb, Clock, Timer, X, Tag, WifiOff, StopCircle, ChevronDown, ChevronUp, Eye, EyeOff, RotateCcw as ReturnIcon, Activity, MessageCircle, Wand2, Archive, Link as LinkIcon, Terminal, RefreshCcw, Settings, UploadCloud
+  Flag, FileText, AlertCircle, Loader2, Lightbulb, Clock, Timer, X, Tag, WifiOff, StopCircle, ChevronDown, ChevronUp, Eye, Undo2 as ReturnIcon, Activity, MessageCircle, Archive, Link as LinkIcon, RefreshCcw, Settings, Play, Server
 } from 'lucide-react';
 
 // ==========================================
-// 1. CONFIGURATION & CONSTANTS
+// 1. CONFIGURATION
 // ==========================================
+
+// --- הגדרות GITHUB להפעלה מרחוק ---
+const GITHUB_TOKEN = "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"; // <--- שים כאן את ה-Token שלך (ghp_...)
+const GITHUB_OWNER = "roiebh"; // השם משתמש שלך
+const GITHUB_REPO = "euromix_source"; // שם הפרויקט
 
 const getFirebaseConfig = () => {
   try {
@@ -61,8 +65,9 @@ if (auth) {
     setPersistence(auth, browserLocalPersistence).catch(console.error);
 }
 
-const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'euromix-pro-v3';
-const API_KEY = ""; // Gemini API Key
+const APP_ID = 'euromix-pro-v3';
+// מפתח Gemini (אם יש לך, הכנס כאן. אם לא, החלק של הסיכום לא יעבוד)
+const API_KEY = ""; 
 
 const ADMIN_EMAILS = ['roiebh@gmail.com'];
 
@@ -74,134 +79,6 @@ const DEFAULT_TEAM = [
   { name: 'שחר', email: 'shachar@euromix.co.il', role: 'עורך' }
 ];
 
-// --- המקורות הוסרו מהקוד ועברו למסד נתונים ---
-// המשתנה הזה נשמר ריק כברירת מחדל
-const INITIAL_SOURCES = []; 
-
-// רשימת המקורות המלאה (רק לצורך כפתור האתחול החד פעמי)
-const SEED_SOURCES_LIST = [
-    { name: "Google Alert - site:srgsse.ch", url: "https://rss.app/feeds/XmrR7FDGjjJjsLth.xml", type: "website" },
-    { name: "Google Alert - site:eurovoix.com", url: "https://rss.app/feeds/iFQuiE4YoaS70Bsx.xml", type: "website" },
-    { name: "Google Alert – site:eurovisionfun.com", url: "https://eurovisionfun.com/feed/", type: "website" },
-    { name: "Eurovision.tv", url: "https://rssgenerator.mooo.com/feeds/?p=aaHR0cHM6Ly9ldXJvdmlzaW9uLnR2Lw==", type: "website" },
-    { name: "Wiwibloggs.com", url: "https://wiwibloggs.com/feed/", type: "website" },
-    { name: "Esctoday.com", url: "https://esctoday.com/feed/", type: "website" },
-    { name: "Escportugal.pt", url: "https://www.escportugal.pt/feeds/posts/default?alt=rss", type: "website" },
-    { name: "Songfestival.be", url: "https://songfestival.be/feed/", type: "website" },
-    { name: "Ogaegreece.com", url: "https://ogaegreece.com/feed/", type: "website" },
-    { name: "Eurofestivalnews.com", url: "https://www.eurofestivalnews.com/feed/", type: "website" },
-    { name: "Eurovision-spain.com", url: "https://eurovision-spain.com/feed", type: "website" },
-    { name: "Escplus.es", url: "https://www.escplus.es/feed/", type: "website" },
-    { name: "Eurofestivales.blogspot.com", url: "https://eurofestivales.blogspot.com/feeds/posts/default?alt=rss", type: "website" },
-    { name: "Eurowizja.org", url: "https://eurowizja.org/feed", type: "website" },
-    { name: "Eurovision.de", url: "https://rss.app/feeds/8aQtfmiwBt4ce87g.xml", type: "website" },
-    { name: "Eurosong.dk", url: "https://www.google.com/alerts/feeds/15835567105207766825/12981302875322281890", type: "website" },
-    { name: "Thateurovisionsite.com", url: "https://thateurovisionsite.com/feed/", type: "website" },
-    { name: "Escxtra.com", url: "https://escxtra.com//feed/", type: "website" },
-    { name: "Escunited.com", url: "https://www.escunited.com/feed/", type: "website" },
-    { name: "Dziennik-eurowizyjny.pl", url: "https://dziennik-eurowizyjny.pl/feed/", type: "website" },
-    { name: "Escnorge.no", url: "https://escnorge.no/feed/", type: "website" },
-    { name: "Esc-kompakt.de", url: "https://esc-kompakt.de/feed/", type: "website" },
-    { name: "Vadeeurovision.es", url: "https://vadeeurovision.es/feed/", type: "website" },
-    { name: "Euroalfa.eu", url: "https://euroalfa.eu/feed/", type: "website" },
-    { name: "Eurosong.hr", url: "https://eurosong.hr/feed/", type: "website" },
-    { name: "Escbeat.com", url: "https://escbeat.com/feed/", type: "website" },
-    { name: "Escbubble.com", url: "https://escbubble.com/feed/", type: "website" },
-    { name: "Eurovoxx.tv", url: "https://eurovoxx.tv/feed/", type: "website" },
-    { name: "Eurovision-contest.ru", url: "https://eurovision-contest.ru/feed/", type: "website" },
-    { name: "Eurovision-quotidien.com", url: "https://eurovision-quotidien.com/feed/", type: "website" },
-    { name: "Eurovision.tvr.ro", url: "https://rss.app/feeds/uQxLPbFk92GSxlPG.xml", type: "website" },
-    { name: "Evrovizija.com", url: "https://evrovizija.com/feed/", type: "website" },
-    { name: "Aussievision.net", url: "https://www.aussievision.net/blog-feed.xml", type: "website" },
-    { name: "אירוויזיון", url: "https://www.google.com/alerts/feeds/15835567105207766825/5473716720584096141", type: "website" },
-    { name: "Eurovision", url: "https://www.google.com/alerts/feeds/15835567105207766825/16734694345916095083", type: "website" },
-    { name: "Евровидение", url: "https://www.google.com/alerts/feeds/15835567105207766825/13669486295274188151", type: "website" },
-    { name: "Евровидения", url: "https://www.google.com/alerts/feeds/15835567105207766825/13164718255631459023", type: "website" },
-    { name: "Еўрабачанне", url: "https://www.google.com/alerts/feeds/15835567105207766825/17262529628428332060", type: "website" },
-    { name: "Евровизије", url: "https://www.google.com/alerts/feeds/15835567105207766825/11425745387878122567", type: "website" },
-    { name: "Евровизия", url: "https://www.google.com/alerts/feeds/15835567105207766825/7969999045049038384", type: "website" },
-    { name: "Eirovīzijas", url: "https://www.google.com/alerts/feeds/15835567105207766825/7686022273118167199", type: "website" },
-    { name: "Eurovizijoje", url: "https://www.google.com/alerts/feeds/15835567105207766825/17418799624831186251", type: "website" },
-    { name: "Eurovíziós", url: "https://www.google.com/alerts/feeds/15835567105207766825/9276029416140084921", type: "website" },
-    { name: "Eurowizji", url: "https://www.google.com/alerts/feeds/15835567105207766825/8937318266706503768", type: "website" },
-    { name: "Eurovisión", url: "https://www.google.com/alerts/feeds/15835567105207766825/5768382838368422062", type: "website" },
-    { name: "Eurovisió", url: "https://www.google.com/alerts/feeds/15835567105207766825/6665331610851128851", type: "website" },
-    { name: "Eurovisão", url: "https://www.google.com/alerts/feeds/15835567105207766825/6073672349489065697", type: "website" },
-    { name: "Евровизија", url: "https://www.google.com/alerts/feeds/15835567105207766825/12504643566802910413", type: "website" },
-    { name: "Avroviziya", url: "https://www.google.com/alerts/feeds/15835567105207766825/5229535975056204060", type: "website" },
-    { name: "Eurovisiooni", url: "https://www.google.com/alerts/feeds/15835567105207766825/6489150213567016703", type: "website" },
-    { name: "Eurovisioonil", url: "https://www.google.com/alerts/feeds/15835567105207766825/1180767461695683410", type: "website" },
-    { name: "Evrovizije", url: "https://www.google.com/alerts/feeds/15835567105207766825/836375354746867643", type: "website" },
-    { name: "eurosongu", url: "https://www.google.com/alerts/feeds/15835567105207766825/6708471790519134431", type: "website" },
-    { name: "eurosonga", url: "https://www.google.com/alerts/feeds/15835567105207766825/2511188842940626316", type: "website" },
-    { name: "Euroviziji", url: "https://www.google.com/alerts/feeds/15835567105207766825/8117892362414115022", type: "website" },
-    { name: "Eurovizi", url: "https://www.google.com/alerts/feeds/15835567105207766825/15615812334629122465", type: "website" },
-    { name: "Eurovizioni", url: "https://www.google.com/alerts/feeds/15835567105207766825/5615330509302177194", type: "website" },
-    { name: "Eurovisiesongfestival", url: "https://www.google.com/alerts/feeds/15835567105207766825/15780802084620737192", type: "website" },
-    { name: "Söngvakeppni", url: "https://www.google.com/alerts/feeds/15835567105207766825/15423983244498170540", type: "website" },
-    { name: "Եվրատեսիլ", url: "https://www.google.com/alerts/feeds/15835567105207766825/15099035478425700531", type: "website" },
-    { name: "ევროვიზიის", url: "https://www.google.com/alerts/feeds/15835567105207766825/14407299024310346891", type: "website" },
-    { name: "مسابقة يوروفيجن الأوروبية", url: "https://www.google.com/alerts/feeds/15835567105207766825/2150643630344992794", type: "website" },
-    { name: "أوروفيزيون", url: "https://www.google.com/alerts/feeds/15835567105207766825/1913102588284681727", type: "website" },
-    { name: "\"eurovision\" \"Zvicra\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/600578587183424385", type: "website" },
-    { name: "\"Shqipëria\" \"Eurovizion\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/5270168749846509977", type: "website" },
-    { name: "\"eurovision\" \"norge\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/10258311237790315460", type: "website" },
-    { name: "\"eurovision\" \"sverige\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/7471694817148723592", type: "website" },
-    { name: "\"eurovision\" \"romania\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/13469247121030984786", type: "website" },
-    { name: "\"eurovision\" \"united kingdom\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/5521115869083766938", type: "website" },
-    { name: "\"eurovision\" \"australia\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/15462106606358024819", type: "website" },
-    { name: "\"eurovision\" \"ireland\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/4939101851014900767", type: "website" },
-    { name: "\"Österreich\" \"Eurovision\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/7841272026805120970", type: "website" },
-    { name: "Белоруссии Евровидение", url: "https://www.google.com/alerts/feeds/15835567105207766825/138718906201805591", type: "website" },
-    { name: "\"Belgique\" \"l'Eurovision\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/1734480943282004171", type: "website" },
-    { name: "\"België\" \"songfestival\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/18149203235573798037", type: "website" },
-    { name: "Евровидение Молдова", url: "https://www.google.com/alerts/feeds/15835567105207766825/4171072731871609982", type: "website" },
-    { name: "eurosongu bosna", url: "https://www.google.com/alerts/feeds/15835567105207766825/4854044355477788333", type: "website" },
-    { name: "hrvatska eurosong", url: "https://www.google.com/alerts/feeds/15835567105207766825/15551386491322919916", type: "website" },
-    { name: "Κύπρος Eurovision", url: "https://www.google.com/alerts/feeds/15835567105207766825/826679917683776817", type: "website" },
-    { name: "Ελλάδα Eurovision", url: "https://www.google.com/alerts/feeds/15835567105207766825/3752359685739993463", type: "website" },
-    { name: "\"France\" \"l'Eurovision\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/4702931870982455282", type: "website" },
-    { name: "Deutschland eurovision", url: "https://www.google.com/alerts/feeds/15835567105207766825/5024685657597218016", type: "website" },
-    { name: "italia \"l'eurovision\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/5825472544868778374", type: "website" },
-    { name: "malta fil-Eurovision", url: "https://www.google.com/alerts/feeds/15835567105207766825/17366842103016854853", type: "website" },
-    { name: "România Eurovision", url: "https://www.google.com/alerts/feeds/15835567105207766825/14327067969509063538", type: "website" },
-    { name: "slovenija evroviziji", url: "https://www.google.com/alerts/feeds/15835567105207766825/10446842549172419926", type: "website" },
-    { name: "\"Türkiye\" \"Eurovision\"", url: "https://www.google.com/alerts/feeds/15835567105207766825/14086237475371258259", type: "website" },
-    { name: "Euromix.co.il", url: "https://www.google.co.il/alerts/feeds/15835567105207766825/7628706936256400347", type: "website" },
-    { name: "ניסיון פיד ישיר EUROMIX", url: "https://www.euromix.co.il/feed/", type: "website" },
-    { name: "eurovoix.com", url: "https://eurovoix.com/feed/", type: "website" },
-    { name: "Eurovision.tv (RSS.app)", url: "https://rss.app/feeds/Ajogi3ZKuKozFIT6.xml", type: "website" }
-];
-
-const FUN_FACTS = [
-    "הסמי-פיינל גורם לאירופה לגלות מחדש גיאוגרפיה: “רגע, המדינה הזאת קיימת?”.",
-    "לפעמים הזוכה הוא מי שהיה הכי “נכון לרגע” ולא בהכרח מי שהיה הכי “מושלם טכנית”.",
-    "יש שירים שמקבלים חיים שניים בטיקטוק שנים אחרי—כי העולם אוהב קאמבקים מוזרים.",
-    "ברגע שמתחילים הניקודים, כולם הופכים לשופטי על עם תיאוריה למה זה “מכור/גאוני/מביך”.",
-    "בכל אירוויזיון יש לפחות שיר אחד שגורם לך לשאול: “זה מבריק או שאני פשוט עייף?”.",
-    "אין עוד תחרות שבה לבוש כסוף, לבוש זהב ולבוש “דיסקו-אסטרונאוט” ייראו כמו תלבושת יום-יומית.",
-    "והעובדה הכי מצחיקה: למרות כל זה—בשנה הבאה כולם חוזרים לראות שוב.",
-    "המופע חייב להישאר קצר: שיר באירוויזיון מוגבל ל-3 דקות, כדי שאף בלדה לא תצליח להחזיק את אירופה כבת ערובה.",
-    "על הבמה מותר עד 6 אנשים בלבד—גם אם השיר נשמע כאילו צריך מקהלה של 40.",
-    "אסור להעלות בעלי חיים לבמה, כלומר אין סוסים, אין חתולים, ואין “רגע, זה זאב אמיתי?”.",
-    "לאורך השנים הופיעו יותר עשן ופירוטכניקה מאשר בכמה מלחמות סרטים הוליוודיות.",
-    "יש מדינות שמביאות “קונספט” ולא שיר—ואז כולם מתווכחים שבועיים מה בעצם ראו.",
-    "האירוויזיון הוא כנראה המקום היחיד שבו כינור חשמלי ולבוש חללי נחשבים “בחירה שמרנית”.",
-    "“דוּז פואַ” (12 נקודות) הפך לביטוי על-זמני שמסוגל לגרום לצעקה גם במשרד שקט.",
-    "יש שירים שבהם הריקוד מפורסם יותר מהמנגינה—ולפעמים זה מרגיש ממש בכוונה.",
-    "הרבה שירים נשמעים שמחים לגמרי, אבל מסתירים טקסט דרמטי של “נפרדנו אתמול ואני מת מבפנים”.",
-    "יש קטע קבוע שבו המגישים מנסים להיות מצחיקים—והקהל בבית מתפלל שייגמר מהר.",
-    "בקהל תמיד תימצא דגל ענק שלא ברור איך עבר אבטחה.",
-    "מדי שנה יש לפחות הופעה אחת שבה מישהו מסתובב עם כנפיים/גלימה/שריון, כי למה לא.",
-    "יש שנים שבהן חצי מהשירים מתחילים בלחישה אינטימית ואז מתפוצצים בפזמון כאילו מישהו לחץ “מצב טורבו”.",
-    "לפעמים התחרות מרגישה כמו כנס של מעצבי תאורה עם הפסקות מוזיקה קצרות באמצע.",
-    "אי אפשר לעלות עם מסר פוליטי ברור—מה שגורם לאנשים להיות יצירתיים מאוד עם “מטאפורות”.",
-    "יש מדינות שמחליפות שפה לשיר כדי להיות מובנות יותר—ואז כולם מתגעגעים לרגעי “לא הבנתי מילה אבל זה היה מדהים”.",
-    "כל שנה יש טרנד מוזיקלי חדש: שנה אחת EDM, שנה אחרת בלדות, ושנה אחרת… “שילוב של הכול יחד כי אירוויזיון”.",
-    "מופע הביניים לפעמים כל כך מושקע שהוא גורם לשירי התחרות להיראות כמו חזרה גנרלית.",
-    "יש הופעות שבהן נראה שהזמר/ת נלחם/ת עם הבמה (מדרגות, פלטפורמה, רוחות מלאכותיות) יותר מאשר עם התווים."
-];
-
 // ==========================================
 // 2. SERVICES
 // ==========================================
@@ -210,35 +87,19 @@ class NetworkService {
     static proxies = [
         (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, 
         (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-        (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-        (u) => `https://thingproxy.freeboard.io/fetch/${u}`,
-        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
     ];
 
-    static async delay(ms) {
-        return new Promise(res => setTimeout(res, ms));
-    }
-
-    static async fetch(url, retries = 1) { 
+    static async fetch(url) { 
         const shuffled = [...this.proxies].sort(() => 0.5 - Math.random());
-        
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            for (const proxyGen of shuffled) {
-                try {
-                    const controller = new AbortController();
-                    const id = setTimeout(() => controller.abort(), 6000);
-                    const res = await fetch(proxyGen(url), { signal: controller.signal });
-                    clearTimeout(id);
-                    
-                    if (res.ok) {
-                        const data = await res.json(); 
-                        if (data && data.contents) return data.contents; // allorigins
-                        return JSON.stringify(data);
-                    }
-                } catch (e) { }
-                await this.delay(200);
-            }
-            await this.delay(500); 
+        for (const proxyGen of shuffled) {
+            try {
+                const res = await fetch(proxyGen(url));
+                if (res.ok) {
+                    const data = await res.json(); 
+                    if (data && data.contents) return data.contents;
+                    return JSON.stringify(data);
+                }
+            } catch (e) { }
         }
         return null;
     }
@@ -249,153 +110,75 @@ class ContentProcessor {
         if (!text) return 'English';
         const lower = text.toLowerCase();
         if (/[\u0590-\u05FF]/.test(text)) return 'Hebrew';
-        if (/[\u0400-\u04FF]/.test(text)) return 'Cyrillic';
-        if (/[\u0370-\u03FF]/.test(text)) return 'Greek';
         if (/\b(the|and|is|to|of)\b/.test(lower)) return 'English';
-        if (/\b(le|la|les|et|est|pour)\b/.test(lower)) return 'French';
-        if (/\b(el|la|los|y|en|por)\b/.test(lower)) return 'Spanish';
         return 'English';
     }
     
-    static async enrich(url) { 
-        return { image: null, summary: null, text: null }; 
-    }
-}
-
-class TranslationService {
-    static async translate(text, targetLang) {
-        if (!text || text.length < 2) return { text: text || "", lang: "unknown" };
-        if (targetLang === 'iw' && /[\u0590-\u05FF]/.test(text)) return { text: text, lang: 'he' };
-
-        // 1. Gemini API
-        if (API_KEY) {
-            try {
-                const prompt = `Translate to ${targetLang === 'en' ? 'English' : 'Hebrew'}: "${text}". Return JSON: {"translatedText": "...", "detectedLanguage": "..."}`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    let jsonText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
-                    const json = JSON.parse(jsonText);
-                    return { text: json.translatedText, lang: json.detectedLanguage || 'detected' };
-                }
-            } catch(e) {}
-        }
-        
-        // 2. Fallback: Google Translate via Proxy
+    // פונקציה שמורידה את ה-HTML ומנסה לחלץ טקסט
+    static async fetchContent(url) {
         try {
-             const tl = targetLang === 'he' ? 'iw' : targetLang;
-             const gtUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(text.substring(0, 500))}`;
-             const raw = await NetworkService.fetch(gtUrl);
-             if (raw) {
-                 let data;
-                 try { data = JSON.parse(raw); } catch { data = raw; }
-                 if (typeof data === 'string') data = JSON.parse(data);
-
-                 if (data && data[0]) {
-                     const translated = data[0].map(x => x[0]).join('');
-                     return { text: translated, lang: 'detected' };
-                 }
-             }
-        } catch(e) {}
-
-        return { text: text, lang: 'error' }; 
-    }
-}
-
-class ScraperEngine {
-    static async getRSSFeed(source, hours = 72, limit = 0) {
-        let feedUrl = source.url || "";
-        
-        if (feedUrl.includes('reddit.com') && !feedUrl.includes('.rss') && !feedUrl.includes('.xml')) {
-             feedUrl = feedUrl.endsWith('/') ? `${feedUrl}.rss` : `${feedUrl}/.rss`;
-        }
-
-        if (source.type === 'search') {
-            feedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(source.query)}&hl=en-US&gl=US&ceid=US:en`;
-        }
-
-        if (!feedUrl) return [];
-
-        const cutoffDate = new Date();
-        cutoffDate.setHours(cutoffDate.getHours() - hours);
-
-        const processItems = (items) => {
-            let processed = items.map((item) => {
-                const snippet = (item.description || "").replace(/<[^>]*>?/gm, '').trim();
-                const pubDateStr = item.pubDate || new Date().toISOString();
-                const pubDate = new Date(pubDateStr);
-
-                if (pubDate < cutoffDate) return null;
-
-                let img = item.thumbnail || item.enclosure?.link || null;
-                if (!img && item.description) {
-                     const match = item.description.match(/src=["']([^"']+)["']/);
-                     if (match) img = match[1];
-                }
-                if (!img && item['media:content']) {
-                     img = item['media:content'].url;
-                }
-
-                return {
-                    source: source.name,
-                    title: item.title || "No Title",
-                    link: item.link || "#",
-                    originLang: ContentProcessor.detectLanguage(item.title),
-                    pubDate: pubDate.toISOString(),
-                    img: img || null, 
-                    snippet: snippet || "",
-                    type: source.type
-                };
-            }).filter(Boolean);
-            
-            if (limit > 0) processed = processed.slice(0, limit);
-            return processed;
-        };
-
-        // Try rss2json first
-        try {
-            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=100`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.status === 'ok' && data.items) {
-                    return processItems(data.items);
-                }
-            }
-        } catch(e) {}
-
-        // Try raw fetch (proxies)
-        try {
-            const xmlStr = await NetworkService.fetch(feedUrl);
-            if (!xmlStr) return null; 
+            const html = await NetworkService.fetch(url);
+            if (!html) return null;
             
             const parser = new DOMParser();
-            const xml = parser.parseFromString(xmlStr, "text/xml");
-            const items = Array.from(xml.querySelectorAll("item"));
+            const doc = parser.parseFromString(html, "text/html");
             
-            const rawItems = items.map(item => {
-                 const media = item.getElementsByTagNameNS("*", "content");
-                 let thumb = item.getElementsByTagNameNS("*", "thumbnail")[0]?.getAttribute("url");
-                 if(!thumb && media.length > 0) thumb = media[0].getAttribute("url");
-                 
-                 return {
-                    title: item.querySelector("title")?.textContent,
-                    link: item.querySelector("link")?.textContent,
-                    pubDate: item.querySelector("pubDate")?.textContent,
-                    description: item.querySelector("description")?.textContent,
-                    enclosure: { link: item.querySelector("enclosure")?.getAttribute("url") },
-                    thumbnail: thumb,
-                    'media:content': { url: thumb }
-                };
-            });
+            // ניסיון לחלץ תמונה
+            let image = null;
+            const ogImage = doc.querySelector('meta[property="og:image"]');
+            if (ogImage) image = ogImage.content;
+            
+            // ניסיון לחלץ טקסט (פשוט לוקחים את כל ה-P)
+            const paragraphs = Array.from(doc.querySelectorAll('p')).map(p => p.innerText).join('\n');
+            const cleanText = paragraphs.substring(0, 5000); // הגבלה כדי לא להעמיס על ה-API
 
-            return processItems(rawItems);
-        } catch(e) { return null; } 
+            return { image, text: cleanText };
+        } catch (e) {
+            return null;
+        }
+    }
+}
+
+class AIManager {
+    static async processArticle(title, content) {
+        if (!API_KEY) return null;
+        
+        try {
+            // פרומפט מתוחכם ל-Gemini
+            const prompt = `
+            You are a Eurovision news editor.
+            Task:
+            1. Translate the title "${title}" to Hebrew (titleHe) and English (titleEn).
+            2. Summarize the following article content into a short paragraph in Hebrew (summaryHe) and English (summaryEn).
+            
+            Article Content:
+            "${content}"
+
+            Return ONLY JSON:
+            {
+                "titleHe": "...",
+                "titleEn": "...",
+                "summaryHe": "...",
+                "summaryEn": "..."
+            }
+            `;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                let jsonText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+                return JSON.parse(jsonText);
+            }
+        } catch(e) {
+            console.error("AI Error:", e);
+        }
+        return null;
     }
 }
 
@@ -415,20 +198,6 @@ const timeSince = (date) => {
     if (hours < 24) return `לפני ${hours} שעות`;
     const days = Math.floor(hours / 24);
     return `לפני ${Math.floor(days)} ימים`;
-};
-
-const isLast24Hours = (dateStr) => {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return false;
-      const now = new Date();
-      return (now.getTime() - d.getTime()) < 24 * 60 * 60 * 1000; 
-  };
-
-const formatDuration = (seconds) => {
-    if (!seconds) return "";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    return `${h}ש ${m}ד`;
 };
 
 const updateUserStats = async (userName, field, delta) => {
@@ -465,7 +234,6 @@ const LiveTimer = ({ startTime }) => {
     const h = Math.floor(elapsed / 3600);
     const m = Math.floor((elapsed % 3600) / 60);
     const s = elapsed % 60;
-
     const formattedTime = `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
     return (
@@ -476,71 +244,12 @@ const LiveTimer = ({ startTime }) => {
     );
 };
 
-// ... LoadingScreen, TeamModal, SourcesModal, StatsModal, EditProfileModal ...
-const LoadingScreen = ({ status, progress, total, onStop, sourceStatuses }) => {
-    const [fact, setFact] = useState(FUN_FACTS[0]);
-    const [showLog, setShowLog] = useState(false);
-    const percentage = total > 0 ? Math.round((progress / total) * 100) : 0;
-
-    useEffect(() => {
-        setFact(FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)]);
-        const interval = setInterval(() => {
-            setFact(FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)]);
-        }, 5000); 
-        return () => clearInterval(interval);
-    }, []);
-
-    return (
-        <div className="fixed inset-0 bg-[#0f172a]/95 z-[200] flex flex-col items-center justify-center p-8 backdrop-blur-md overflow-hidden">
-            <div className="max-w-xl w-full bg-slate-800 border border-slate-700 rounded-3xl p-8 shadow-2xl relative flex flex-col max-h-[90vh]">
-                <div className="w-20 h-20 bg-[#002366] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg border-4 border-[#E3000F] shrink-0">
-                    <Loader2 className="w-10 h-10 text-white animate-spin" />
-                </div>
-                <h2 className="text-2xl font-black text-white mb-2 text-center">{status}</h2>
-                <div className="w-full bg-slate-700 rounded-full h-4 mb-2 overflow-hidden relative shrink-0">
-                    <div className="h-full bg-gradient-to-r from-blue-600 to-[#E3000F] transition-all duration-300 ease-out" style={{ width: `${percentage}%` }}></div>
-                </div>
-                <p className="text-slate-400 mb-6 text-sm font-mono flex justify-between px-2 shrink-0">
-                    <span>מעבד: {progress} / {total}</span>
-                    <span className="font-bold text-white">{percentage}%</span>
-                </p>
-                <div className="flex-1 overflow-y-auto mb-6 bg-slate-900/50 rounded-xl p-2 border border-slate-700 min-h-0 text-right" dir="rtl">
-                    <div className="grid grid-cols-2 gap-2">
-                        {sourceStatuses && sourceStatuses.map((s, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-xs p-1">
-                                {s.status === 'pending' && <Loader2 size={10} className="animate-spin text-blue-400"/>}
-                                {s.status === 'success' && <CheckCircle size={10} className="text-green-500"/>}
-                                {s.status === 'error' && <X size={10} className="text-red-500"/>}
-                                <span className={`truncate ${s.status === 'success' ? 'text-slate-300' : s.status === 'error' ? 'text-red-400' : 'text-slate-500'}`}>
-                                    {s.name} {s.count > 0 && `(${s.count})`}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                <div className="flex gap-2 justify-center">
-                    <button onClick={() => setShowLog(!showLog)} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mb-2">
-                        <Terminal size={12}/> {showLog ? 'הסתר לוג' : 'הצג לוג מפורט'}
-                    </button>
-                </div>
-                {showLog && (
-                    <div className="bg-black/50 p-2 rounded text-[10px] font-mono text-green-400 h-24 overflow-y-auto mb-4 text-left" dir="ltr">
-                        {sourceStatuses.map((s, i) => (
-                            <div key={i}>{`[${s.status.toUpperCase()}] ${s.name}: ${s.count} items`}</div>
-                        ))}
-                    </div>
-                )}
-                <div className="bg-slate-700/50 p-4 rounded-xl border border-slate-600 mb-6 shrink-0">
-                    <div className="flex items-center justify-center gap-2 mb-2 text-[#E3000F] font-bold uppercase tracking-widest text-xs"><Lightbulb size={14}/> הידעת?</div>
-                    <p className="text-sm text-slate-200 font-medium leading-relaxed text-center">"{fact}"</p>
-                </div>
-                <button onClick={onStop} className="flex items-center justify-center gap-2 text-red-400 hover:text-red-300 font-bold text-sm bg-red-900/20 px-4 py-2 rounded-lg mx-auto transition-colors border border-red-900/30 shrink-0">
-                    <StopCircle size={16} /> עצור וכנס למערכת
-                </button>
-            </div>
-        </div>
-    );
-};
+const LoadingScreen = () => (
+    <div className="fixed inset-0 bg-[#0f172a] z-[200] flex flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+        <h2 className="text-white font-bold">טוען מערכת...</h2>
+    </div>
+);
 
 const TeamModal = ({ onClose, team, onUpdateTeam }) => {
     const [newName, setNewName] = useState('');
@@ -589,58 +298,20 @@ const TeamModal = ({ onClose, team, onUpdateTeam }) => {
     );
 };
 
-const SourcesModal = ({ onClose, sources, counts, excluded, onToggle, onAdd, onRemove, onRefreshSource, scanWindow, onUpdateScanWindow, articleLimit, onUpdateArticleLimit }) => {
-    const [newUrl, setNewUrl] = useState('');
-    const [newName, setNewName] = useState('');
-    const allSourcesList = sources || [];
-
-    // SEEDING FUNCTION
-    const handleSeedSources = async () => {
-        if (!confirm("פעולה זו תעלה כ-80 מקורות למסד הנתונים. האם להמשיך?")) return;
-        
-        try {
-            const batch = writeBatch(db);
-            const sourcesRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'settings', 'config');
-            
-            // אנחנו שומרים את זה תחת config -> customSources כרגע כדי לא לשבור את הלוגיקה הקיימת בקוד
-            // אבל מכניסים את כל הרשימה הגדולה
-            await setDoc(sourcesRef, { customSources: SEED_SOURCES_LIST }, { merge: true });
-            
-            alert("המקורות עלו בהצלחה! הרשימה תתעדכן מיד.");
-            onClose(); // סגור את המודל לרענון
-        } catch (e) {
-            console.error(e);
-            alert("שגיאה בהעלאת מקורות: " + e.message);
-        }
-    };
-
-    const handleMagicAdd = () => {
-         if (!newUrl || !newName) return;
-         let urlToAdd = newUrl;
-         if (urlToAdd.includes('reddit.com') && !urlToAdd.includes('.rss') && !urlToAdd.includes('.xml')) {
-             urlToAdd = urlToAdd.endsWith('/') ? `${urlToAdd}.rss` : `${urlToAdd}/.rss`;
-         } else if (!urlToAdd.includes('/feed') && !urlToAdd.includes('.xml') && !urlToAdd.includes('rss')) {
-             urlToAdd = urlToAdd.endsWith('/') ? `${urlToAdd}feed` : `${urlToAdd}/feed`;
-         }
-         onAdd({name: newName, url: urlToAdd, type: 'website'});
-         setNewName(''); setNewUrl('');
-    };
+const SourcesModal = ({ onClose, counts, excluded, onToggle, scanWindow, onUpdateScanWindow, allAvailableSources }) => {
+    const sources = allAvailableSources || [];
 
     return (
         <div className="fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-slate-800 p-6 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-700" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-white flex gap-2 items-center"><Layers/> ניהול מקורות</h2>
-                    <button onClick={handleSeedSources} className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded flex items-center gap-1">
-                        <UploadCloud size={12}/> אתחול מקורות ראשוני
-                    </button>
+                    <h2 className="text-xl font-bold text-white flex gap-2 items-center"><Layers/> ניהול מקורות וסינון</h2>
                 </div>
                 
-                {/* SETTINGS AREA */}
                 <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-600 mb-6 flex flex-col gap-3">
-                    <h3 className="text-white text-sm font-bold mb-2 flex items-center gap-2"><Settings size={14}/> הגדרות סריקה</h3>
+                    <h3 className="text-white text-sm font-bold mb-2 flex items-center gap-2"><Settings size={14}/> הגדרות תצוגה</h3>
                     <div className="flex items-center gap-4">
-                        <label className="text-slate-400 text-xs">חלון זמן לסריקה (שעות):</label>
+                        <label className="text-slate-400 text-xs">הצג כתבות מ-X שעות אחרונות:</label>
                         <input 
                             type="number" 
                             value={scanWindow} 
@@ -649,33 +320,12 @@ const SourcesModal = ({ onClose, sources, counts, excluded, onToggle, onAdd, onR
                             min="1"
                         />
                     </div>
-                    <div className="flex items-center gap-4">
-                        <label className="text-slate-400 text-xs">הגבלת כמות כתבות (לכל מקור):</label>
-                        <input 
-                            type="number" 
-                            value={articleLimit} 
-                            onChange={(e) => onUpdateArticleLimit(Number(e.target.value))}
-                            className="bg-slate-800 border border-slate-600 rounded p-1 text-white w-20 text-center text-sm"
-                            min="0"
-                            placeholder="0 = ללא"
-                        />
-                        <span className="text-[10px] text-slate-500">(0 = ללא הגבלה)</span>
-                    </div>
-                </div>
-
-                <div className="flex gap-2 mb-4 bg-slate-900 p-3 rounded-lg" dir="rtl">
-                    <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="שם המקור" className="flex-1 p-2 rounded bg-slate-800 border border-slate-600 text-white text-sm"/>
-                    <div className="flex-[2] flex relative">
-                        <input value={newUrl} onChange={e=>setNewUrl(e.target.value)} placeholder="כתובת האתר / RSS" className="w-full p-2 rounded-r bg-slate-800 border border-slate-600 text-white text-sm" dir="ltr"/>
-                        <button onClick={handleMagicAdd} className="bg-blue-600 text-white px-4 rounded-l font-bold text-sm flex items-center gap-1"><Wand2 size={14}/> הוסף</button>
-                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-2 pr-2" dir="rtl">
-                    {allSourcesList.map((s, i) => {
-                        const isExcluded = excluded.has(s.name);
-                        const count = counts[s.name] || 0; 
-                        const isCustom = !INITIAL_SOURCES.find(is => is.name === s.name);
+                    {sources.map((s, i) => {
+                        const isExcluded = excluded.has(s);
+                        const count = counts[s] || 0; 
                         
                         return (
                             <div key={i} className={`flex justify-between items-center p-3 rounded border ${isExcluded ? 'bg-slate-900/50 border-slate-800 text-slate-500' : 'bg-slate-700 border-slate-600 text-white'}`}>
@@ -683,16 +333,13 @@ const SourcesModal = ({ onClose, sources, counts, excluded, onToggle, onAdd, onR
                                     <input 
                                         type="checkbox" 
                                         checked={!isExcluded} 
-                                        onChange={() => onToggle(s.name)}
+                                        onChange={() => onToggle(s)}
                                         className="w-4 h-4 accent-green-500 cursor-pointer rounded"
                                     />
-                                    <span className="truncate text-sm font-bold">{s.name}</span>
+                                    <span className="truncate text-sm font-bold">{s}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                      <span className="text-xs text-slate-400 font-mono">{count}</span>
-                                     <button onClick={() => onRefreshSource(s)} className="p-1 hover:text-green-400 text-slate-500"><RefreshCw size={12}/></button>
-                                     <button onClick={() => onRemove(s)} className="p-1 hover:text-red-500 text-slate-500"><Trash2 size={12}/></button>
-                                     <span className="text-[10px] uppercase bg-slate-900 px-1.5 rounded opacity-70">{s.type}</span>
                                 </div>
                             </div>
                         );
@@ -793,20 +440,19 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
     const [waLoading, setWaLoading] = useState(false);
     const dropdownRef = useRef(null);
 
-    // SNIPPET DISPLAY LOGIC
-    const rawSnippet = article.snippetHe || article.snippetEn || article.snippet || '';
-    const shouldTruncate = rawSnippet.length > 250;
-    const displayedSnippet = isExpanded ? rawSnippet : (shouldTruncate ? rawSnippet.substring(0, 250) + "..." : rawSnippet);
+    // תצוגת תקציר: עדיפות לתרגום, אחרת מקור
+    let snippetDisplay = article.snippet;
+    if (globalLang === 'he' && article.snippetHe) snippetDisplay = article.snippetHe;
+    if (globalLang === 'en' && article.snippetEn) snippetDisplay = article.snippetEn;
+
+    const shouldTruncate = snippetDisplay?.length > 250;
+    const displayedSnippet = isExpanded ? snippetDisplay : (shouldTruncate ? snippetDisplay.substring(0, 250) + "..." : snippetDisplay);
 
     useEffect(() => { if (article.img) setLocalImg(article.img); }, [article.img]);
 
     let displayTitle = article.title;
-    
-    if (globalLang === 'he') {
-        if (article.titleHe) displayTitle = article.titleHe;
-    } else if (globalLang === 'en') {
-        if (article.titleEn) displayTitle = article.titleEn;
-    } else { displayTitle = article.originalTitle || article.title; }
+    if (globalLang === 'he' && article.titleHe) displayTitle = article.titleHe;
+    else if (globalLang === 'en' && article.titleEn) displayTitle = article.titleEn;
 
     const dir = (globalLang === 'he' || ContentProcessor.detectLanguage(displayTitle) === 'he') ? 'rtl' : 'ltr';
     const align = dir === 'rtl' ? 'text-right' : 'text-left';
@@ -835,7 +481,7 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
          }
          onUpdate(article.id, { 
              status: 'in_writing', 
-             flagged: true, 
+             flagged: true, // מחזיר את הדגל
              isReturned: true, 
              hasCountedWriting: false 
          });
@@ -844,39 +490,33 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
     const toggleField = (field) => {
         const newVal = !article[field];
         const updates = { [field]: newVal };
-        
         if (user?.displayName) {
              let statField = null;
              if (field === 'translationComplete') statField = 'translated';
              else if (field === 'publishedSite') statField = 'publishedSite';
              else if (field === 'publishedSocialHe') statField = 'publishedSocialHe';
              else if (field === 'publishedSocialEn') statField = 'publishedSocialEn';
-
-             if (statField) {
-                 updateUserStats(user.displayName, statField, newVal ? 1 : -1);
-             }
+             if (statField) updateUserStats(user.displayName, statField, newVal ? 1 : -1);
         }
-
         const isAllDone = (
             (field === 'publishedSite' ? newVal : article.publishedSite) &&
             (field === 'publishedSocialHe' ? newVal : article.publishedSocialHe) &&
             (field === 'publishedSocialEn' ? newVal : article.publishedSocialEn) &&
             (field === 'translationComplete' ? newVal : article.translationComplete)
         );
-
-        if (isAllDone) {
-            updates.status = 'published';
-            updates.flagged = false;
-        } else if (article.status === 'published' && !newVal) {
-            updates.status = 'review';
-        }
-
-        if(user?.displayName && newVal) updateUserStats(user.displayName, field, 1);
+        if (isAllDone) { updates.status = 'published'; updates.flagged = false; }
+        else if (article.status === 'published' && !newVal) { updates.status = 'review'; }
+        
         onUpdate(article.id, updates);
     };
     
     const handleArchive = () => {
-        onUpdate(article.id, { status: 'archived', flagged: false });
+        // אם כבר בארכיון - החזר לטיפול
+        if (article.status === 'archived') {
+            onUpdate(article.id, { status: 'review', flagged: false });
+        } else {
+            onUpdate(article.id, { status: 'archived', flagged: false });
+        }
     };
 
     const toggleFlag = () => {
@@ -888,34 +528,38 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
         incrementArticleView(article.id);
     };
 
+    // --- הפונקציה החדשה והחכמה לניתוח תוכן וסיכום ---
     const handleRefresh = async () => {
         setIsRefreshing(true);
         onUpdate(article.id, { processing: true });
+        
         try {
+            // 1. הורדת תוכן הכתבה
+            const contentData = await ContentProcessor.fetchContent(article.link);
             const updates = {};
-             if (!article.titleHe) {
-                 const t = await TranslationService.translate(article.title, 'iw');
-                 if (t.text) updates.titleHe = t.text;
-                 const te = await TranslationService.translate(article.title, 'en');
-                 if (te.text) updates.titleEn = te.text;
-             }
-             if (!article.snippet || (!article.img)) {
-                 const meta = await ContentProcessor.enrich(article.link);
-                 if (meta.summary && !article.snippet) updates.snippet = meta.summary;
-                 if (meta.image && !article.img) {
-                     updates.img = meta.image;
-                     setLocalImg(meta.image);
-                 }
-             }
-             const txt = updates.snippet || article.snippet;
-             if (txt) {
-                  const st = await TranslationService.translate(txt, 'iw');
-                  if (st.text) updates.snippetHe = st.text;
-                  const ste = await TranslationService.translate(txt, 'en');
-                  if (ste.text) updates.snippetEn = ste.text;
-             }
-             updates.processing = false;
-             onUpdate(article.id, updates);
+
+            if (contentData) {
+                // עדכון תמונה אם נמצאה טובה יותר
+                if (contentData.image && !article.img) {
+                    updates.img = contentData.image;
+                    setLocalImg(contentData.image);
+                }
+
+                // 2. שליחה ל-Gemini לתרגום וסיכום
+                if (API_KEY && contentData.text) {
+                    const aiResult = await AIManager.processArticle(article.title, contentData.text);
+                    if (aiResult) {
+                        updates.titleHe = aiResult.titleHe;
+                        updates.titleEn = aiResult.titleEn;
+                        updates.snippetHe = aiResult.summaryHe;
+                        updates.snippetEn = aiResult.summaryEn;
+                    }
+                }
+            }
+            
+            updates.processing = false;
+            onUpdate(article.id, updates);
+
         } catch(e) {
             console.error(e);
             onUpdate(article.id, { processing: false });
@@ -924,30 +568,13 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
     };
 
     const shareWhatsApp = async () => {
-        setWaLoading(true);
-        let titleToShare = article.titleHe || article.title;
-        let snippetToShare = article.snippetHe || article.snippet;
-
-        if (!article.titleHe || !article.snippetHe) {
-            try {
-                if(!article.titleHe) {
-                    const t = await TranslationService.translate(article.title, 'iw');
-                    if (t.text) { titleToShare = t.text; onUpdate(article.id, {titleHe: t.text}); }
-                }
-                if(!article.snippetHe && article.snippet) {
-                    const s = await TranslationService.translate(article.snippet, 'iw');
-                    if (s.text) { snippetToShare = s.text; onUpdate(article.id, {snippetHe: s.text}); }
-                }
-            } catch(e) {}
-        }
-        
+        const titleToShare = article.titleHe || article.title;
+        const snippetToShare = article.snippetHe || article.snippet;
         const text = `*${titleToShare}*\n\n${snippetToShare || ''}\n\n${article.link}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-        setWaLoading(false);
     };
 
     const saveDocLink = () => { onUpdate(article.id, { docLink: docLinkInput }); setDocLinkMode(false); };
-    
     const isAssignedToMe = user && article.assignedTo === user.displayName;
 
     const StatusButtons = () => (
@@ -957,8 +584,8 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
              <button onClick={() => toggleField('publishedSocialHe')} title="סושיאל עברית" className={`p-1.5 rounded transition-all w-7 h-7 flex items-center justify-center ${article.publishedSocialHe ? 'bg-purple-600 text-white' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}><Share2 size={14}/></button>
              <button onClick={() => toggleField('publishedSocialEn')} title="סושיאל אנגלית" className={`p-1.5 rounded transition-all w-7 h-7 flex items-center justify-center ${article.publishedSocialEn ? 'bg-pink-600 text-white' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}><span className="text-[10px] font-bold">EN</span></button>
              
-             <button onClick={handleArchive} title="ארכב (סיים)" className="p-1.5 rounded bg-slate-800 text-slate-500 hover:text-white ml-1 w-7 h-7 flex items-center justify-center border border-slate-600">
-                 <Archive size={12}/>
+             <button onClick={handleArchive} title={article.status === 'archived' ? 'בטל ארכיון' : 'ארכב (סיים)'} className={`p-1.5 rounded ml-1 w-7 h-7 flex items-center justify-center border ${article.status === 'archived' ? 'bg-orange-500 text-white border-orange-600' : 'bg-slate-800 text-slate-500 hover:text-white border-slate-600'}`}>
+                 {article.status === 'archived' ? <ReturnIcon size={12}/> : <Archive size={12}/>}
              </button>
         </div>
     );
@@ -977,9 +604,9 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
                         <div className="flex items-center gap-2">
                              <span className="text-[9px] font-bold text-blue-400 bg-blue-400/10 px-1.5 rounded">{article.source}</span>
                              <button onClick={shareWhatsApp} title="שתף בוואטסאפ" className="p-1 rounded bg-green-500/20 text-green-500 hover:bg-green-500/30">
-                                 {waLoading ? <Loader2 size={10} className="animate-spin"/> : <MessageCircle size={10}/>}
+                                 <MessageCircle size={10}/>
                              </button>
-                             <button onClick={handleRefresh} title="רענן נתונים" className="p-1 rounded bg-slate-700 text-slate-400 hover:text-white">
+                             <button onClick={handleRefresh} title="רענן וסכם ב-AI" className="p-1 rounded bg-slate-700 text-slate-400 hover:text-white">
                                  {isRefreshing ? <Loader2 size={10} className="animate-spin"/> : <RefreshCw size={10}/>}
                              </button>
                              {article.docLink && <a href={article.docLink} target="_blank" className="text-blue-400"><FileText size={12}/></a>}
@@ -1017,9 +644,9 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
                 <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold bg-[#002366] text-white px-2 py-0.5 rounded shadow-sm">{article.source}</span>
                     <button onClick={shareWhatsApp} title="שתף בוואטסאפ" className="p-1 rounded bg-green-500/20 text-green-500 hover:bg-green-500/30">
-                         {waLoading ? <Loader2 size={12} className="animate-spin"/> : <MessageCircle size={12}/>}
+                         <MessageCircle size={12}/>
                     </button>
-                    <button onClick={handleRefresh} title="רענן נתונים" className="p-1 rounded bg-slate-700 text-slate-400 hover:text-white">
+                    <button onClick={handleRefresh} title="רענן וסכם ב-AI" className="p-1 rounded bg-slate-700 text-slate-400 hover:text-white">
                          {isRefreshing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>}
                     </button>
                     {article.isReturned && <span className="text-[10px] bg-yellow-900/50 text-yellow-500 px-1.5 rounded border border-yellow-500/30">הוחזר לתיקון</span>}
@@ -1040,7 +667,7 @@ const ArticleCard = ({ article, user, showImages, team, viewMode, globalLang, on
                 )}
                 <a href={article.link} target="_blank" onClick={handleLinkClick} className={`font-bold text-sm text-slate-100 leading-snug hover:text-blue-400 transition-colors ${align}`} dir={dir}>{displayTitle}</a>
                 
-                {rawSnippet && !isMobile && (
+                {snippetDisplay && !isMobile && (
                     <div className={`text-[11px] text-slate-400 leading-relaxed ${align}`} dir={dir}>
                         {displayedSnippet}
                         {shouldTruncate && (
@@ -1098,21 +725,15 @@ export default function EuroMixSystem() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [team, setTeam] = useState(DEFAULT_TEAM);
-  const [scanWindow, setScanWindow] = useState(72); 
-  const [articleLimit, setArticleLimit] = useState(0); 
+  const [scanWindow, setScanWindow] = useState(9999); // ברירת מחדל: ללא הגבלה
+  const [lastScrapeTime, setLastScrapeTime] = useState(null);
+  const [triggerLoading, setTriggerLoading] = useState(false);
   
   const [showImages, setShowImages] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); 
   const [isMobile, setIsMobile] = useState(false);
   const [globalViewLang, setGlobalViewLang] = useState('he'); 
   
-  const [scanning, setScanning] = useState(false);
-  const [scanStatus, setScanStatus] = useState(""); 
-  const [scanProgress, setScanProgress] = useState(0); 
-  const [scanTotal, setScanTotal] = useState(0); 
-  const [enhanceProgress, setEnhanceProgress] = useState(0);
-  const [enhanceTotal, setEnhanceTotal] = useState(0);
-  const [sourceStatuses, setSourceStatuses] = useState([]); 
   const [isProcessingBackground, setIsProcessingBackground] = useState(false);
   const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
 
@@ -1125,15 +746,12 @@ export default function EuroMixSystem() {
   
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [showUserModal, setShowUserModal] = useState(false); 
   const [showSourcesModal, setShowSourcesModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false); 
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [manualTitle, setManualTitle] = useState('');
   const [manualLink, setManualLink] = useState('');
-  const [userProfileInput, setUserProfileInput] = useState({ name: '', role: 'כתב' });
 
-  const [sourcesList, setSourcesList] = useState(INITIAL_SOURCES);
   const [excludedSources, setExcludedSources] = useState(new Set());
 
   useEffect(() => {
@@ -1150,17 +768,9 @@ export default function EuroMixSystem() {
       setExcludedSources(newSet);
       localStorage.setItem('excluded_sources', JSON.stringify([...newSet]));
   };
-
-  const handleAddSource = (newSrc) => {
-      setSourcesList(prev => [...prev, newSrc]);
-  };
   
   const handleUpdateScanWindow = (hours) => {
       setScanWindow(hours);
-  };
-
-  const handleUpdateArticleLimit = (limit) => {
-      setArticleLimit(limit);
   };
 
   const handleAddTag = (e) => {
@@ -1168,6 +778,35 @@ export default function EuroMixSystem() {
           setActiveTags([...activeTags, tagInput.trim()]);
           setTagInput('');
       }
+  };
+
+  const handleTriggerScraper = async () => {
+      if (!GITHUB_TOKEN) {
+          alert("חסר GitHub Token בקוד. לא ניתן להפעיל מרחוק.");
+          return;
+      }
+      setTriggerLoading(true);
+      try {
+          const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/scrape.yml/dispatches`, {
+              method: 'POST',
+              headers: {
+                  'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ ref: 'main' })
+          });
+          
+          if (res.ok) {
+              alert("הפקודה נשלחה בהצלחה! הסריקה תתחיל תוך דקה.");
+          } else {
+              alert("שגיאה בשליחת הפקודה לגיטהאב.");
+          }
+      } catch (e) {
+          console.error(e);
+          alert("שגיאת תקשורת.");
+      }
+      setTriggerLoading(false);
   };
 
   useEffect(() => {
@@ -1194,7 +833,8 @@ export default function EuroMixSystem() {
       const unsubArticles = onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'articles'), (snap) => {
           const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           const now = new Date();
-          const filteredList = list.filter(a => (now - new Date(a.pubDate)) < scanWindow * 60 * 60 * 1000);
+          // סינון לפי חלון זמן (אם לא מוגדר כ-9999)
+          const filteredList = list.filter(a => scanWindow > 1000 ? true : (now - new Date(a.pubDate)) < scanWindow * 60 * 60 * 1000);
           
           filteredList.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
           setArticles(filteredList);
@@ -1204,12 +844,19 @@ export default function EuroMixSystem() {
           if (snap.exists()) {
               const data = snap.data();
               setTeam(Array.isArray(data.team) ? data.team : DEFAULT_TEAM);
-              if (data.customSources) {
-                  setSourcesList([...INITIAL_SOURCES, ...data.customSources]);
-              }
           } else { setTeam(DEFAULT_TEAM); }
       });
-      return () => { unsubArticles(); unsubConfig(); };
+      
+      const unsubStatus = onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'data', 'settings', 'status'), (snap) => {
+          if (snap.exists()) {
+              const data = snap.data();
+              if (data.lastScrape) {
+                  setLastScrapeTime(new Date(data.lastScrape.seconds * 1000));
+              }
+          }
+      });
+
+      return () => { unsubArticles(); unsubConfig(); unsubStatus(); };
   }, [user, scanWindow]);
 
   const handleUpdateProfile = async (newName) => {
@@ -1222,76 +869,9 @@ export default function EuroMixSystem() {
     } catch(e) { alert("Failed to update profile"); }
   };
 
-  const handleGoogleLogin = async () => {
-      if(!auth) {
-          alert("שגיאה: מערכת האימות לא אתחלה כראוי (חסר Firebase Config?)");
-          return;
-      }
-      try { 
-        await signInWithPopup(auth, new GoogleAuthProvider()); 
-      } catch(e) {
-         console.error("Google Login Error:", e);
-         alert(`שגיאת התחברות: ${e.message}`);
-      }
-  };
-
   const handleUpdateTeam = async (newTeam) => {
       setTeam(newTeam);
       await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'settings', 'config'), { team: newTeam }, { merge: true });
-  };
-
-  const handleAddCustomSource = async (newSrc) => {
-      if (sourcesList.find(s => s.name === newSrc.name)) {
-          alert('מקור עם שם זה כבר קיים');
-          return;
-      }
-      const currentCustom = sourcesList.filter(s => !INITIAL_SOURCES.find(i => i.name === s.name));
-      const updatedCustom = [...currentCustom, newSrc];
-      setSourcesList(prev => [...prev, newSrc]);
-      await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'settings', 'config'), { customSources: updatedCustom }, { merge: true });
-  };
-
-  const handleRemoveSource = async (sourceToRemove) => {
-      const currentCustom = sourcesList.filter(s => !INITIAL_SOURCES.find(i => i.name === s.name));
-      const updatedCustom = currentCustom.filter(s => s.name !== sourceToRemove.name);
-      setSourcesList(prev => prev.filter(s => s.name !== sourceToRemove.name));
-      await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'settings', 'config'), { customSources: updatedCustom }, { merge: true });
-  };
-  
-  const handleRefreshSource = async (source) => {
-      setScanning(true);
-      setScanStatus(`מרענן את ${source.name}...`);
-      const items = await ScraperEngine.getRSSFeed(source, scanWindow, articleLimit);
-      
-      setSourceStatuses(prev => {
-          const exists = prev.find(s => s.name === source.name);
-          if (exists) {
-              return prev.map(s => s.name === source.name ? { ...s, status: 'success', count: items ? items.length : 0 } : s);
-          }
-          return [...prev, { name: source.name, status: 'success', count: items ? items.length : 0 }];
-      });
-      
-      if (items && items.length > 0) {
-          const existingLinks = new Set(articles.map(a => a.link));
-          const newItems = items.filter(item => !existingLinks.has(item.link));
-          
-          if (newItems.length > 0) {
-              let batch = writeBatch(db); 
-              let count = 0;
-              for (let i = 0; i < newItems.length; i++) {
-                const newRef = doc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'articles'));
-                batch.set(newRef, {
-                    ...newItems[i], createdAt: serverTimestamp(), status: 'new', flagged: false, 
-                    publishedSite: false, publishedSocialHe: false, publishedSocialEn: false, translationComplete: false,
-                    assignedTo: null, isCustom: false, hasCountedWriting: false
-                });
-                count++;
-                if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
-              }
-              if (count > 0) await batch.commit();
-          }
-      }
-      setScanning(false);
   };
   
   const addManualTask = async () => {
@@ -1319,81 +899,6 @@ export default function EuroMixSystem() {
       });
       if (count > 0) await batch.commit();
       setTimeout(() => setIsGlobalRefreshing(false), 2000);
-  };
-
-  const runScan = async () => {
-    if(scanning || !db) return;
-    setScanning(true);
-    setScanStatus("מתחיל סריקה...");
-    setScanProgress(0);
-    
-    const activeSources = sourcesList.filter(s => !excludedSources.has(s.name));
-    
-    const websites = activeSources.filter(s => s.type === 'website');
-    const searches = activeSources.filter(s => s.type === 'search');
-    const interleaved = [];
-    const maxLen = Math.max(websites.length, searches.length);
-    for (let i = 0; i < maxLen; i++) {
-        if (i < websites.length) interleaved.push(websites[i]);
-        if (i < searches.length) interleaved.push(searches[i]);
-    }
-    
-    setScanTotal(interleaved.length);
-    
-    const initStatuses = interleaved.map(s => ({ name: s.name, status: 'pending', count: 0 }));
-    setSourceStatuses(initStatuses);
-    
-    const batchSize = 2; 
-    let allResults = [];
-    let completed = 0;
-
-    for(let i = 0; i < interleaved.length; i += batchSize) {
-        const batch = interleaved.slice(i, i + batchSize);
-        
-        setSourceStatuses(prev => prev.map(s => batch.some(b => b.name === s.name) ? { ...s, status: 'loading' } : s));
-
-        const batchPromises = batch.map(async (src, idx) => {
-            const items = await ScraperEngine.getRSSFeed(src, scanWindow, articleLimit);
-            setSourceStatuses(prev => prev.map(s => 
-                s.name === src.name ? { ...s, status: items ? 'success' : 'error', count: items ? items.length : 0 } : s
-            ));
-            return items || [];
-        });
-
-        const results = await Promise.allSettled(batchPromises);
-        
-        results.forEach((res) => {
-            if(res.status === 'fulfilled') allResults.push(...res.value);
-        });
-        
-        completed += batch.length;
-        setScanProgress(Math.min(completed, interleaved.length));
-        await new Promise(r => setTimeout(r, 2000)); 
-    }
-
-    setScanStatus(`נמצאו ${allResults.length} כתבות... מסנכרן...`);
-    
-    if (allResults.length > 0) {
-        const existingLinks = new Set(articles.map(a => a.link));
-        const newItems = allResults.filter(item => !existingLinks.has(item.link));
-        
-        if (newItems.length > 0) {
-            let batch = writeBatch(db); 
-            let count = 0;
-            for (let i = 0; i < newItems.length; i++) {
-                const newRef = doc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'articles'));
-                batch.set(newRef, {
-                    ...newItems[i], createdAt: serverTimestamp(), status: 'new', flagged: false, 
-                    publishedSite: false, publishedSocialHe: false, publishedSocialEn: false, translationComplete: false,
-                    assignedTo: null, isCustom: false, hasCountedWriting: false
-                });
-                count++;
-                if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
-            }
-            if (count > 0) await batch.commit();
-        }
-    }
-    setScanning(false);
   };
 
   const isLast24Hours = (dateStr) => {
@@ -1466,58 +971,18 @@ export default function EuroMixSystem() {
       mytasks: user?.displayName ? articles.filter(a => a.assignedTo === user.displayName && (a.status === 'in_writing' || a.isReturned)).length : 0
   };
   
-  const sourcesStats = useMemo(() => {
-      const stats = {};
-      sourcesList.forEach(s => stats[s.name] = 0);
-      articles.forEach(a => { if(a.source) stats[a.source] = (stats[a.source] || 0) + 1; });
-      return stats;
-  }, [articles, sourcesList]);
-
-  useEffect(() => {
-      if (articles.length === 0) {
-          setIsProcessingBackground(false);
-          return;
-      }
-      const timer = setInterval(async () => {
-          const item = articles.find(a => !a.isCustom && (!a.translationComplete || (!a.snippetHe && a.snippet)) && !a.processing && a.status !== 'archived');
-          
-          if (item) {
-              setIsProcessingBackground(true);
-              
-              let updates = {};
-              if (!item.titleHe) {
-                  const t = await TranslationService.translate(item.title, 'iw');
-                  if (t.text && t.text !== item.title) updates.titleHe = t.text;
-                  const te = await TranslationService.translate(item.title, 'en');
-                  if (te.text && te.text !== item.title) updates.titleEn = te.text;
-              }
-              if (!item.snippet || (!item.img)) {
-                  const meta = await ContentProcessor.enrich(item.link);
-                  if (meta.summary && !item.snippet) updates.snippet = meta.summary;
-                  if (meta.image && !item.img) updates.img = meta.image;
-              }
-              
-              if ((updates.snippet || item.snippet) && !item.snippetHe) {
-                  const txt = updates.snippet || item.snippet;
-                  if (txt && txt.length > 5) {
-                      const st = await TranslationService.translate(txt, 'iw');
-                      if (st.text) updates.snippetHe = st.text;
-                      const ste = await TranslationService.translate(txt, 'en');
-                      if (ste.text) updates.snippetEn = ste.text;
-                  }
-              }
-
-              if (Object.keys(updates).length > 0) {
-                  await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'articles', item.id), updates);
-              }
-          } else {
-              setIsProcessingBackground(false);
-          }
-      }, 4000);
-      return () => clearInterval(timer);
+  const allAvailableSources = useMemo(() => {
+      const sources = new Set(articles.map(a => a.source).filter(Boolean));
+      return Array.from(sources).sort();
   }, [articles]);
 
-  if (loading) return <LoadingScreen status="טוען מערכת..." progress={0} total={0} onStop={() => setLoading(false)} sourceStatuses={[]} />;
+  const sourcesStats = useMemo(() => {
+      const stats = {};
+      articles.forEach(a => { if(a.source) stats[a.source] = (stats[a.source] || 0) + 1; });
+      return stats;
+  }, [articles]);
+
+  if (loading) return <LoadingScreen />;
 
   if (!auth && !loading) {
       return (
@@ -1531,21 +996,11 @@ export default function EuroMixSystem() {
 
   return (
     <div className="min-h-screen font-sans bg-slate-900 text-slate-100" dir="rtl">
-        {enhanceTotal > 0 && enhanceProgress < enhanceTotal && (
-             <div className="fixed top-0 left-0 right-0 h-1 bg-slate-800 z-[300]">
-                 <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300" style={{width: `${(enhanceProgress/enhanceTotal)*100}%`}}></div>
-                 <div className="absolute top-1 left-2">
-                     <Activity size={12} className="text-green-400 animate-pulse"/>
-                 </div>
-             </div>
-        )}
-        
         {showTeamModal && <TeamModal onClose={()=>setShowTeamModal(false)} team={team} onUpdateTeam={handleUpdateTeam} />}
         {showEditProfile && user && <EditProfileModal onClose={() => setShowEditProfile(false)} user={user} onSave={handleUpdateProfile} />}
-        {showSourcesModal && <SourcesModal onClose={() => setShowSourcesModal(false)} sources={sourcesList} counts={sourcesStats} excluded={excludedSources} onToggle={handleToggleSource} onAdd={handleAddCustomSource} onRemove={handleRemoveSource} onRefreshSource={handleRefreshSource} scanWindow={scanWindow} onUpdateScanWindow={handleUpdateScanWindow} articleLimit={articleLimit} onUpdateArticleLimit={handleUpdateArticleLimit} />}
+        {showSourcesModal && <SourcesModal onClose={() => setShowSourcesModal(false)} counts={sourcesStats} excluded={excludedSources} onToggle={handleToggleSource} scanWindow={scanWindow} onUpdateScanWindow={handleUpdateScanWindow} allAvailableSources={allAvailableSources} />}
         {showStatsModal && <StatsModal onClose={() => setShowStatsModal(false)} team={team} user={user} />}
         {showTaskModal && <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4"><div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6"><h3 className="text-white font-bold mb-4">הוסף משימה ידנית</h3><input value={manualTitle} onChange={e=>setManualTitle(e.target.value)} placeholder="כותרת" className="w-full mb-4 p-2 bg-slate-900 text-white rounded border border-slate-600"/><div className="flex items-center gap-2 mb-4 bg-slate-900 rounded border border-slate-600 p-1"><LinkIcon size={16} className="text-slate-500 ml-2"/><input value={manualLink} onChange={e=>setManualLink(e.target.value)} placeholder="קישור למקור (אופציונלי)" className="flex-1 bg-transparent text-white outline-none text-sm" dir="ltr"/></div><button onClick={addManualTask} className="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700">הוסף</button><button onClick={()=>setShowTaskModal(false)} className="w-full mt-2 text-slate-400 hover:text-white">ביטול</button></div></div>}
-        {scanning && <LoadingScreen status={scanStatus} progress={scanProgress} total={scanTotal} onStop={() => setScanning(false)} sourceStatuses={sourceStatuses} />}
 
         <div className="flex h-screen overflow-hidden">
             <aside className="w-64 flex-shrink-0 border-l border-slate-700 flex flex-col shadow-xl z-20 bg-slate-900">
@@ -1555,25 +1010,23 @@ export default function EuroMixSystem() {
                         alt="EuroMix Logo" 
                         referrerPolicy="no-referrer"
                         className="h-16 w-auto mb-2 drop-shadow-lg object-contain"
-                        onError={(e) => {
-                             e.currentTarget.style.display = 'none';
-                        }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                     <div className="text-2xl font-black text-white relative">
                         מרכז <span className="text-red-500">המקורות</span>
-                        {isProcessingBackground && <span className="absolute -top-1 -right-3 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>}
                     </div>
+                    {/* תצוגת זמן ריצה אחרון */}
+                    {lastScrapeTime && (
+                        <div className="text-[10px] text-slate-500 mt-[-5px]">
+                            עודכן: {lastScrapeTime.toLocaleTimeString()} {lastScrapeTime.toLocaleDateString()}
+                        </div>
+                    )}
                     
                     {user && (
                          <div className="flex flex-col items-center gap-2 mt-2">
-                             {user.photoURL ? (
-                                 <img src={user.photoURL} alt="Profile" className="w-12 h-12 rounded-full border-2 border-slate-600" />
-                             ) : (
-                                 <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-xl font-bold">{user.displayName ? user.displayName[0] : 'U'}</div>
-                             )}
                              <div className="flex items-center gap-2">
-                                <div className="text-sm font-bold truncate text-slate-300">{user.displayName || 'אורח'}</div>
-                                <button onClick={() => setShowEditProfile(true)} className="text-slate-500 hover:text-white"><Edit2 size={12}/></button>
+                                 <div className="text-sm font-bold truncate text-slate-300">{user.displayName || 'אורח'}</div>
+                                 <button onClick={() => setShowEditProfile(true)} className="text-slate-500 hover:text-white"><Edit2 size={12}/></button>
                              </div>
                          </div>
                     )}
@@ -1599,6 +1052,12 @@ export default function EuroMixSystem() {
                 </div>
                 
                 <div className="p-4 border-t border-slate-700 flex flex-col gap-2">
+                     {/* כפתור הפעלה מרחוק */}
+                     <button onClick={handleTriggerScraper} className="w-full text-xs text-orange-400 hover:text-white py-2 rounded flex items-center justify-center gap-2 border border-orange-500/30 hover:bg-orange-500/20">
+                         {triggerLoading ? <Loader2 size={14} className="animate-spin"/> : <Play size={14}/>} 
+                         הפעל סריקה עכשיו
+                     </button>
+
                      {isAdmin && (
                          <>
                              <button onClick={() => setShowTeamModal(true)} className="w-full text-xs text-slate-400 hover:text-white py-2 rounded flex items-center justify-center gap-2 border border-slate-700 hover:bg-slate-800"><Users size={14}/> ניהול צוות</button>
@@ -1606,7 +1065,6 @@ export default function EuroMixSystem() {
                          </>
                      )}
                      <button onClick={() => setShowSourcesModal(true)} className="w-full text-xs text-slate-400 hover:text-white py-2 rounded flex items-center justify-center gap-2 border border-slate-700 hover:bg-slate-800"><Layers size={14}/> ניהול מקורות</button>
-                     <button onClick={resetDatabase} className="w-full text-xs text-red-500 hover:bg-red-500/10 py-2 rounded flex items-center justify-center gap-2 border border-red-500/30"><RotateCcw size={12}/> איפוס מסד נתונים</button>
                      <button onClick={() => auth && signOut(auth)} className="text-xs text-red-400 hover:text-red-300 font-bold flex items-center justify-center gap-1 mt-2"><LogOut size={14}/> יציאה</button>
                 </div>
             </aside>
@@ -1647,7 +1105,6 @@ export default function EuroMixSystem() {
                          <button onClick={() => setGroupSources(!groupSources)} className={`p-2 rounded-lg border transition-all ${groupSources ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'}`}><Group size={16}/></button>
                          <button onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')} className="p-2 rounded-lg border bg-slate-800 text-slate-400 border-slate-700 hover:text-white"><LayoutList size={16}/></button>
                          <button onClick={() => setShowImages(!showImages)} className={`p-2 rounded-lg border transition-all ${showImages ? 'bg-green-600 text-white border-green-600' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'}`}><ImageIcon size={16}/></button>
-                         <button id="scan-btn" onClick={runScan} disabled={scanning} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white text-xs shadow-lg transition-all ${scanning ? 'bg-slate-600' : 'bg-[#E3000F] hover:bg-red-600'}`}><RefreshCw size={14} className={scanning ? 'animate-spin' : ''}/> {scanning ? 'סורק...' : 'סנכרון'}</button>
                          <button onClick={handleGlobalRefresh} className="p-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 shadow-lg" title="רענן הכל"><RefreshCcw size={16} className={isGlobalRefreshing ? 'animate-spin' : ''}/></button>
                          <button onClick={() => setShowTaskModal(true)} className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg"><Plus size={16}/></button>
                     </div>
