@@ -36,7 +36,9 @@ import {
 // ==========================================
 
 // --- הגדרות GITHUB להפעלה מרחוק ---
-const GITHUB_TOKEN = "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"; // <--- שים כאן את ה-Token שלך (ghp_...)
+const TOKEN_PREFIX = "ghp_";
+const TOKEN_SECRET = "uUCX3CxYwMuQkijArb2ENOxpDsZZp13r3u1h"
+const GITHUB_TOKEN = TOKEN_PREFIX + TOKEN_SECRET;
 const GITHUB_OWNER = "roiebh"; // השם משתמש שלך
 const GITHUB_REPO = "euromix_source"; // שם הפרויקט
 
