@@ -1,0 +1,29 @@
+name: EuroMix Scraper
+
+on:
+  schedule:
+    # רץ כל 30 דקות
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # מאפשר לך גם להריץ ידנית בלחיצת כפתור מגיטהאב
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install firebase-admin puppeteer
+
+      - name: Create Service Account File
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > service-account.json
+
+      - name: Run Scraper
+        run: node scraper.cjs
