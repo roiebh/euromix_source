@@ -24,59 +24,67 @@ async function run() {
     const page = await browser.newPage();
 
     try {
-        await page.setViewport({ width: 1280, height: 800 });
-
-        console.log("globe טוען את העמוד...");
-        await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.setViewport({ width: 1366, height: 768 });
+        await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 90000 });
         
-        console.log("⏳ ממתין שהתוכן ייטען...");
-        await new Promise(r => setTimeout(r, 5000)); 
+        // גלילה כדי לטעון תמונות
+        await autoScroll(page);
 
         const articles = await page.evaluate(() => {
             const results = [];
-            const items = document.querySelectorAll('.anwp-pg-post-teaser, article, .wprss-feed-item');
+            const allLinks = document.querySelectorAll('a');
 
-            items.forEach(item => {
-                const linkEl = item.querySelector('a');
-                if (!linkEl) return;
+            allLinks.forEach(link => {
+                const href = link.href;
+                const title = link.innerText.trim();
+                
+                if (!href || href.length < 10) return;
+                if (href.includes('euromix.co.il')) return;
+                if (href.includes('facebook.com') || href.includes('twitter.com') || href.includes('whatsapp.com') || href.includes('instagram.com') || href.includes('google.com')) return;
+                if (title.length < 15) return;
 
-                const title = linkEl.innerText.trim();
-                const link = linkEl.href;
+                // חילוץ תמונה משופר
                 let img = null;
-                const imgEl = item.querySelector('img');
-                if (imgEl) img = imgEl.src || imgEl.getAttribute('data-src');
+                let parent = link.parentElement;
+                let depth = 0;
+                while (parent && !img && depth < 3) { // מחפש 3 רמות למעלה
+                    const foundImg = parent.querySelector('img');
+                    if (foundImg) {
+                        img = foundImg.src || foundImg.getAttribute('data-src');
+                    }
+                    parent = parent.parentElement;
+                    depth++;
+                }
 
-                let source = "EuroMix";
+                let source = "Unknown";
                 try {
-                    const urlObj = new URL(link);
+                    const urlObj = new URL(href);
                     source = urlObj.hostname.replace('www.', '');
                 } catch (e) {}
 
-                let dateStr = new Date().toISOString();
-                
-                if (title.length > 2 && !link.includes('euromix.co.il')) {
-                    results.push({
-                        title,
-                        link,
-                        source,
-                        pubDate: dateStr,
-                        img: img,
-                        snippet: title
-                    });
-                }
+                results.push({
+                    title: title,
+                    link: href,
+                    source: source,
+                    img: img,
+                    pubDate: new Date().toISOString(),
+                    snippet: title
+                });
             });
 
             return results;
         });
 
-        console.log(`✅ הרובוט מצא ${articles.length} כתבות.`);
+        console.log(`✅ נמצאו ${articles.length} כתבות.`);
 
-        // --- התיקון הקריטי כאן ---
-        let batch = db.batch(); // יצירת Batch ראשוני
+        // סינון כפילויות
+        const uniqueArticles = Array.from(new Map(articles.map(item => [item.link, item])).values());
+
+        const batch = db.batch();
         let count = 0;
         let savedCount = 0;
 
-        for (const article of articles) {
+        for (const article of uniqueArticles) {
             const exists = await db.collection('artifacts').doc(APP_ID)
                 .collection('public').doc('data').collection('articles')
                 .where('link', '==', article.link).limit(1).get();
@@ -103,23 +111,45 @@ async function run() {
             savedCount++;
             count++;
             
-            // אם הגענו ל-400, שומרים ומתחילים חדש
             if (count >= 400) {
                 await batch.commit();
-                console.log("📦 נגלה של 400 נשמרה...");
-                batch = db.batch(); // <--- השורה שהייתה חסרה!
                 count = 0;
             }
         }
 
         if (count > 0) await batch.commit();
-        console.log(`🎉 סך הכל נשמרו ${savedCount} כתבות חדשות!`);
+        console.log(`🎉 נשמרו ${savedCount} כתבות חדשות.`);
+
+        // === עדכון זמן הריצה האחרון ===
+        await db.collection('artifacts').doc(APP_ID)
+            .collection('public').doc('data').collection('settings').doc('status')
+            .set({ lastScrape: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            
+        console.log("⏰ זמן סריקה עודכן.");
 
     } catch (e) {
         console.error("❌ שגיאה:", e);
     } finally {
         await browser.close();
     }
+}
+
+async function autoScroll(page){
+    await page.evaluate(async () => {
+        await new Promise((resolve) => {
+            var totalHeight = 0;
+            var distance = 100;
+            var timer = setInterval(() => {
+                var scrollHeight = document.body.scrollHeight;
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+                if(totalHeight >= scrollHeight - window.innerHeight){
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, 100);
+        });
+    });
 }
 
 run();
