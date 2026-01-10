@@ -151,7 +151,7 @@ async function run() {
                 ...article,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 status: 'new',
-                flagged: true, // מסומן כברירת מחדל כדי שיראו את זה
+                flagged: false, // מסומן כברירת מחדל כדי שיראו את זה
                 publishedSite: false,
                 publishedSocialHe: false,
                 publishedSocialEn: false,
