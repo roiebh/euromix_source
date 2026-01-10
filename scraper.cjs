@@ -27,12 +27,34 @@ async function run() {
         await page.setViewport({ width: 1366, height: 768 });
         await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 90000 });
         
-        // גלילה כדי לטעון תמונות
         await autoScroll(page);
 
         const articles = await page.evaluate(() => {
             const results = [];
             const allLinks = document.querySelectorAll('a');
+
+            // פונקציית עזר לחישוב זמן יחסי (למשל: "לפני 3 שעות")
+            const parseRelativeTime = (text) => {
+                if (!text) return new Date().toISOString();
+                
+                const now = new Date();
+                const cleanText = text.toLowerCase();
+                
+                // חילוץ מספרים
+                const match = cleanText.match(/(\d+)/);
+                if (!match) return now.toISOString();
+                const num = parseInt(match[0]);
+
+                if (cleanText.includes('דק') || cleanText.includes('min')) {
+                    now.setMinutes(now.getMinutes() - num);
+                } else if (cleanText.includes('שע') || cleanText.includes('hour')) {
+                    now.setHours(now.getHours() - num);
+                } else if (cleanText.includes('יום') || cleanText.includes('ימים') || cleanText.includes('day')) {
+                    now.setDate(now.getDate() - num);
+                }
+                
+                return now.toISOString();
+            };
 
             allLinks.forEach(link => {
                 const href = link.href;
@@ -43,16 +65,39 @@ async function run() {
                 if (href.includes('facebook.com') || href.includes('twitter.com') || href.includes('whatsapp.com') || href.includes('instagram.com') || href.includes('google.com')) return;
                 if (title.length < 15) return;
 
-                // חילוץ תמונה משופר
-                let img = null;
-                let parent = link.parentElement;
+                // חיפוש אלמנט תאריך בקרבת הקישור
+                let dateStr = null;
+                let container = link.parentElement;
                 let depth = 0;
-                while (parent && !img && depth < 3) { // מחפש 3 רמות למעלה
-                    const foundImg = parent.querySelector('img');
+                
+                // מחפש למעלה ולמטה טקסט שמרמז על זמן
+                while (container && !dateStr && depth < 3) {
+                    // נסה למצוא טקסט שמכיל "לפני" או "ago" בתוך הקונטיינר
+                    const timeElement = Array.from(container.querySelectorAll('*')).find(el => 
+                        el.innerText.includes('לפני') || el.innerText.includes('ago')
+                    );
+                    
+                    if (timeElement) {
+                        dateStr = timeElement.innerText;
+                    } else if (container.innerText.includes('לפני') || container.innerText.includes('ago')) {
+                        // לפעמים הטקסט נמצא ישירות בקונטיינר
+                        dateStr = container.innerText;
+                    }
+                    
+                    container = container.parentElement;
+                    depth++;
+                }
+
+                // חילוץ תמונה
+                let img = null;
+                container = link.parentElement;
+                depth = 0;
+                while (container && !img && depth < 3) {
+                    const foundImg = container.querySelector('img');
                     if (foundImg) {
                         img = foundImg.src || foundImg.getAttribute('data-src');
                     }
-                    parent = parent.parentElement;
+                    container = container.parentElement;
                     depth++;
                 }
 
@@ -67,7 +112,7 @@ async function run() {
                     link: href,
                     source: source,
                     img: img,
-                    pubDate: new Date().toISOString(),
+                    pubDate: parseRelativeTime(dateStr), // שימוש בפונקציית הזמן החדשה
                     snippet: title
                 });
             });
@@ -85,6 +130,7 @@ async function run() {
         let savedCount = 0;
 
         for (const article of uniqueArticles) {
+            // בדיקה אם הכתבה כבר קיימת כדי לא לדרוס אותה (וכך לאבד את הסטטוס שלה)
             const exists = await db.collection('artifacts').doc(APP_ID)
                 .collection('public').doc('data').collection('articles')
                 .where('link', '==', article.link).limit(1).get();
@@ -121,9 +167,10 @@ async function run() {
         console.log(`🎉 נשמרו ${savedCount} כתבות חדשות.`);
 
         // === עדכון זמן הריצה האחרון ===
+        // שים לב: אנחנו משתמשים ב-Date עכשיווי של השרת כדי למנוע בעיות אזורי זמן
         await db.collection('artifacts').doc(APP_ID)
             .collection('public').doc('data').collection('settings').doc('status')
-            .set({ lastScrape: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            .set({ lastScrape: admin.firestore.Timestamp.now() }, { merge: true });
             
         console.log("⏰ זמן סריקה עודכן.");
 
