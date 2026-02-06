@@ -3,7 +3,7 @@ name: EuroMix Scraper
 on:
   schedule:
     # רץ כל 30 דקות
-    - cron: '*/30 * * * *'
+    - cron: '*/30000000000 * * * *'
   workflow_dispatch: # מאפשר לך גם להריץ ידנית בלחיצת כפתור מגיטהאב
 
 jobs:
